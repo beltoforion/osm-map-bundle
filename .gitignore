@@ -1,2 +1,6 @@
 debug.log
 node_modules/*
+*.map
+dist/osm-gps-map.js
+dist/osm-gps-map-bundle.js.LICENSE.txt
+dist/main.js
