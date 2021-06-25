@@ -5,3 +5,4 @@ dist/osm-gps-map.js
 dist/osm-gps-map-bundle.js.LICENSE.txt
 dist/main.js
 src/*.js
+package-lock.json
