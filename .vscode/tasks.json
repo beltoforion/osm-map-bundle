@@ -1,0 +1,23 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build OSM-GPS map (Develop)",
+            "type": "npm",
+            "script": "build",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "webpack --mode development"
+        },
+        {
+            "label": "Build OSM-GPS map (Production)",
+            "type": "npm",
+            "script": "prod",
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "webpack --mode production"
+        }
+    ]
+}

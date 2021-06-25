@@ -1,0 +1,81 @@
+var OsmMap;
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./src/osm-gps-map.ts":
+/*!****************************!*\
+  !*** ./src/osm-gps-map.ts ***!
+  \****************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.OsmMap = void 0;
+class OsmMap {
+    constructor(div) {
+        this.div = div;
+    }
+}
+exports.OsmMap = OsmMap;
+
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+(() => {
+var exports = __webpack_exports__;
+/*!**********************!*\
+  !*** ./src/index.ts ***!
+  \**********************/
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.gpsMap = void 0;
+const osm_gps_map_1 = __webpack_require__(/*! ./osm-gps-map */ "./src/osm-gps-map.ts");
+exports.gpsMap = null;
+try {
+    // The html code must contain a canvas named "cvGalaxy"
+    var divMap = document.getElementById('GpsMap');
+    if (divMap == null) {
+        throw Error('"The OSM renderer needs a div element with id "GpsMap"');
+    }
+    exports.gpsMap = new osm_gps_map_1.OsmMap(divMap);
+}
+catch (Error) {
+    alert(Error.message);
+}
+
+})();
+
+OsmMap = __webpack_exports__;
+/******/ })()
+;
+//# sourceMappingURL=osm-gps-map.js.map

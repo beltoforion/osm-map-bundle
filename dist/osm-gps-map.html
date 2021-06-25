@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  
+	<link rel="stylesheet" href="ol.css" />
+  <title>OSM maps</title>
+</head>
+<body>
+
+<div style="height:750px;width:750px;" id="map" class="map">
+</div>
+
+<script src="./osm-gps-map-bundle.js"></script>
+<script>
+	var map = window.OsmMap.createGpxMap({
+		id  : 'map',
+		gpx : 'grabentour.gpx',
+		lon : 13.3604225,
+		lat : 50.9951988
+	})
+</script>
+
+</body>
+</html>
