@@ -3,27 +3,19 @@ import Map from 'ol/Map';
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
 import OSM from 'ol/source/OSM';
 import View from 'ol/View';
-import ViewOptions from 'ol/View';
-import Coordinate from 'ol/coordinate';
-import TileState from 'ol/TileState';
 import ZoomSlider from 'ol/control/ZoomSlider';
 import { defaults as defaultControls } from 'ol/control';
 import { useGeographic } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 import GPX from 'ol/format/GPX';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
-import { coordinate } from 'openlayers';
-import { Extent } from 'ol/extent';
 
 export class OsmMap { 
-    private lon : number = 0
-    private lat : number = 0
-    private map : Map | null = null
-    private view : View | null = null;
-    private gpxLayer : VectorLayer | null = null;
-    private rasterLayer : TileLayer | null = null;
-    private lineStyle : Style | null = null;
-    private markerStyle : Style | null = null;
+    private map : Map | undefined = undefined
+    private gpxLayer : VectorLayer | undefined = undefined;
+    private rasterLayer : TileLayer | undefined = undefined;
+    private lineStyle : Style | undefined = undefined;
+    private markerStyle : Style | undefined = undefined;
 
     
     public constructor(config : any) {
@@ -35,11 +27,11 @@ export class OsmMap {
             throw Error('The html document does not contain a div element named "' + config.id + '"')
         }
 
-        this.view = new View({
+        var view : View = new View({
              center: [config.lon, config.lat],
-             zoom: 14,
-             minZoom: 9,
-             maxZoom: 20,
+             zoom : 10,
+             minZoom: config.minZoom ?? 9,
+             maxZoom: config.maxZoom ?? 20,
            })
         
         this.lineStyle = new Style({
@@ -62,13 +54,19 @@ export class OsmMap {
             })
           })
 
-        this.gpxLayer = new VectorLayer({
-           source: new VectorSource({
-             url: config.gpx,
-             format: new GPX(),
+        var gpxLayer = this.gpxLayer = new VectorLayer({
+            visible: true,
+            source: new VectorSource({
+              url: config.gpx,
+              format: new GPX(),
            }),
            style: this.lineStyle
          });
+
+        // Fit gpx to map after first render
+        this.gpxLayer.once("postrender", e => {
+          view.fit(gpxLayer.getSource().getExtent(), { padding: [40, 40, 40, 40] });
+        });
 
         this.rasterLayer = new TileLayer({
           source: new OSM(),
@@ -77,16 +75,8 @@ export class OsmMap {
         this.map = new Map({
             layers: [this.rasterLayer, this.gpxLayer ],
             target: divMap.id,
-            view: this.view,
+            view: view,
             controls: defaultControls().extend([new ZoomSlider()])
           });
-
-          var extent = this.gpxLayer.getExtent();
-          // if (extent === undefined)
-          // {
-          //   throw new Error('Gpx layer Extent is undefined!');
-          // }
-
-          // this.view.fit(extent)
     }
 }
