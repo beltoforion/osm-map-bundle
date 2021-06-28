@@ -8,16 +8,36 @@ import { defaults as defaultControls } from 'ol/control';
 import { useGeographic } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 import GPX from 'ol/format/GPX';
-import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
+import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style';
+import Feature from 'ol/Feature';
+
+import GeoJSON from 'ol/format/GeoJSON';
 
 export class OsmMap { 
     private map : Map | undefined = undefined
     private gpxLayer : VectorLayer | undefined = undefined;
     private rasterLayer : TileLayer | undefined = undefined;
+    private annotationLayer : VectorLayer | null = null;
     private lineStyle : Style | undefined = undefined;
-    private markerStyle : Style | undefined = undefined;
 
-    
+    private markerStyleFunction(feature : any, resolution : any) : Style {
+      return new Style({
+        image: new CircleStyle({
+          fill: new Fill({ color: 'rgba(255,255,0,0.7)' }),
+          radius: 8,
+          stroke: new Stroke({ color: '#ff0', width: 1 })
+        }),
+        text : new Text({
+          text: feature.get('name'),
+          scale: 1.3,
+          offsetX: 0,
+          offsetY: 20,
+          fill: new Fill({ color: '#000000' }),
+          stroke: new Stroke({ color: '#FFFF99', width: 3.5 })
+        })
+      })
+    }
+
     public constructor(config : any) {
         useGeographic();
 
@@ -41,19 +61,6 @@ export class OsmMap {
           })
         })
 
-        this.markerStyle = new Style({
-            image: new CircleStyle({
-              fill: new Fill({
-                color: 'rgba(255,255,0,0.4)',
-              }),
-              radius: 5,
-              stroke: new Stroke({
-                color: '#ff0',
-                width: 1
-              })
-            })
-          })
-
         var gpxLayer = this.gpxLayer = new VectorLayer({
             visible: true,
             source: new VectorSource({
@@ -63,9 +70,19 @@ export class OsmMap {
            style: this.lineStyle
          });
 
+        if (config.annotation_geojson != null) {
+          this.annotationLayer = new VectorLayer({
+            visible: true,
+            source: new VectorSource({
+              features: new GeoJSON().readFeatures(config.annotation_geojson),
+            }),
+            style: this.markerStyleFunction 
+          });
+        }
+
         // Fit gpx to map after first render
         this.gpxLayer.once("postrender", e => {
-          view.fit(gpxLayer.getSource().getExtent(), { padding: [40, 40, 40, 40] });
+          view.fit(gpxLayer.getSource().getExtent(), { padding: [60, 60, 60, 60] });
         });
 
         this.rasterLayer = new TileLayer({
@@ -78,5 +95,8 @@ export class OsmMap {
             view: view,
             controls: defaultControls().extend([new ZoomSlider()])
           });
+
+          if (this.annotationLayer != null)
+            this.map.addLayer( this.annotationLayer)
     }
 }
