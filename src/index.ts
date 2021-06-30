@@ -1,10 +1,8 @@
-import { OsmMap } from './osm-gps-map'
+import { GpxOsmMap } from './GpxOsmMap'
 
 //export var map : OsmMap | null = null
 
-export function createGpxMap(config: any) : OsmMap {
-
-
-  var map : OsmMap= new OsmMap(config);
+export function createGpxMap(config: any) : GpxOsmMap {
+  var map : GpxOsmMap= new GpxOsmMap(config);
   return map
 }

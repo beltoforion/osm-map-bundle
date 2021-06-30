@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Build OSM-GPS map (Develop)",
+            "label": "Build GpxOsmMap (Develop)",
             "type": "npm",
             "script": "build",
             "group": "build",
@@ -12,7 +12,7 @@
             "detail": "webpack --mode development"
         },
         {
-            "label": "Build OSM-GPS map (Production)",
+            "label": "Build GpxOsmMap (Production)",
             "type": "npm",
             "script": "prod",
             "group": "build",

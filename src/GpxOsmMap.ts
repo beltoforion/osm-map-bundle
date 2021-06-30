@@ -9,11 +9,9 @@ import { useGeographic } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
 import GPX from 'ol/format/GPX';
 import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style';
-import Feature from 'ol/Feature';
-
 import GeoJSON from 'ol/format/GeoJSON';
 
-export class OsmMap { 
+export class GpxOsmMap { 
     private map : Map | undefined = undefined
     private gpxLayer : VectorLayer | undefined = undefined;
     private rasterLayer : TileLayer | undefined = undefined;

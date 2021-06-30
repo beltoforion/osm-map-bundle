@@ -14,8 +14,8 @@ module.exports = {
     },
     output: {
         path: __dirname + '/dist', 
-        filename: 'osm-gps-map-bundle.js',
-        library: 'OsmMap'
+        filename: 'gpx-osm-map-bundle.js',
+        library: 'GpxOsmMap'
 //        pathinfo: true
     },
     devtool: 'source-map'
