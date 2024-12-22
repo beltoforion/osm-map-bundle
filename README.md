@@ -9,3 +9,8 @@ The slippy map uses Open Layers with locally stored tile files. Before you conti
 Please note that you cannot use publicly available tile servers from the Open Street Map project for 
 scraping the tiles! This is against their [tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
 And the script provided here will not work for that purpose.
+
+I recommend setting up a local tile server first as described here:
+
+* https://switch2osm.org/serving-tiles/manually-building-a-tile-server-ubuntu-24-04-lts/
+* https://switch2osm.org/serving-tiles/manually-building-a-tile-server-ubuntu-22-04-lts/
