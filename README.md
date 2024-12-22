@@ -7,7 +7,7 @@ for downloading the necessary tiles from a local tile server.
 ## Prerequisites
 The slippy map uses Open Layers with locally stored tile files. Before you continue you must have created those tiles.
 Please note that you cannot use publicly available tile servers from the Open Street Map project for 
-scraping the tiles! This is against their [tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
+scraping the tiles. This is against their [tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
 And the script provided here will not work for that purpose.
 
 I recommend setting up a local tile server first as described here:
