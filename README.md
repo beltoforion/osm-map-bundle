@@ -33,3 +33,58 @@ python tile_downloader.py \
     --zoom 11 12 13 \
     --output ./osm_tiles
 ```
+
+## Step 3: Adding the slippy map to your HTML
+
+### Create a map container and load osm-map-bundle.js
+
+```
+<div id="map" style="height:750px; width:750px;"></div>
+<link rel="stylesheet" href="ol.css" />
+<script src="osm-map-bundle.js"></script>
+```
+
+### Initialize and set up the map
+
+```
+<script>
+const config = new GpxOsmMap.GpxOsmMapConfig(
+    'map',                  // Map container ID
+    13.3604225,             // Longitude (center)
+    50.9951988,             // Latitude (center)
+    "./osm_tiles"           // Path to local tiles
+);
+
+// Set zoom level configurations
+config.setZoom(14, 19, 14); // Min, max, and initial zoom levels
+
+// Optional: Add GPX layers for tracks
+config.setGpxLayers([
+  { url: 'grabentour.gpx', color: '#f00', width: 4 }
+]);
+
+// Optional: Add annotation points with names and coordinates
+config.setAnnotationLayer({
+	"type": "FeatureCollection",
+	"features": [
+	{ 
+		"type": "Feature", 
+		"properties": { "name": "Wünschmannmühle" }, 
+		"geometry": { 
+			"type": "Point", 	
+			"coordinates": [13.370541, 50.985271] 
+		}
+	},
+	{ 
+		"type": "Feature", 
+		"properties": { "name": "4. Lichtloch" }, 
+		"geometry": { 
+			"type": "Point", 
+			"coordinates": [13.366876, 51.007467] 
+		}
+	}]
+});
+
+const map = new GpxOsmMap.GpxOsmMap(config);
+</script>
+```
