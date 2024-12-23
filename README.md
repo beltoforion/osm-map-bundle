@@ -1,8 +1,14 @@
-# osm-map-bundle
-A module for a DSGVO compliant slippy map for geographic data from the Open Street Map project.
+# GDPR compliant slippy maps from OpenStreetMap data
+This archive contains a javascript module for displaying a slippy map made up of locally stored tiles 
+and a command line python tool for downloading the necessary tiles from a local tile server.
 
-This archive contains a javascript module for displaying the map as well as command line python tool 
-for downloading the necessary tiles from a local tile server.
+Pros:
+- Tiles are prerendered and served from a local folder in your own webspace
+- No connection to a third party tile server is necessary
+- No cookies necessary
+
+Cons:
+- Storing tiles locally may require a lot of space
 
 ## Prerequisites
 The slippy map uses Open Layers with locally stored tile files. Therefore the first step is creating 
