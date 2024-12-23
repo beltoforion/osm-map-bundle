@@ -20,6 +20,11 @@ I recommend setting up a local tile server as described here:
 * https://switch2osm.org/serving-tiles/manually-building-a-tile-server-ubuntu-24-04-lts/
 * https://switch2osm.org/serving-tiles/manually-building-a-tile-server-ubuntu-22-04-lts/
 
+If you follow these instructions you should be able to see the output from the tileserver by navigating to the 
+address: http://127.0.0.1/sample_leaflet.html
+
+![lokaler-tileserver-im-browser](https://github.com/user-attachments/assets/3ad8e2b3-d12a-4c13-b257-666d382049cc)
+
 ## Step 2: Create the tiles for your slippy map
 
 Use the python script tile_downloader.py for rendering tiles for your target area. Specify the geographic coordinates, the desired zoom levels and the output folder.
