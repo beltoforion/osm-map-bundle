@@ -29,7 +29,7 @@ address: http://127.0.0.1/sample_leaflet.html
 
 Use the python script tile_downloader.py for rendering tiles for your target area. Specify the geographic coordinates, the desired zoom levels and the output folder.
 
-```
+```bash
 python tile_downloader.py \
     --min-lat 50.0 \
     --max-lat 51.0 \
@@ -43,7 +43,7 @@ python tile_downloader.py \
 
 ### Create a map container and load osm-map-bundle.js
 
-```
+```html
 <div id="map" style="height:750px; width:750px;"></div>
 <link rel="stylesheet" href="ol.css" />
 <script src="osm-map-bundle.js"></script>
@@ -51,7 +51,7 @@ python tile_downloader.py \
 
 ### Initialize and set up the map
 
-```
+```html
 <script>
 const config = new GpxOsmMap.GpxOsmMapConfig(
     'map',                  // Map container ID
