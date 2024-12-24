@@ -2,6 +2,10 @@
 This archive contains a javascript module for displaying a slippy map made up of locally stored tiles 
 and a command line python tool for downloading the necessary tiles from a local tile server.
 
+A german article is available online:
+
+[https://beltoforion.de/de/openstreetmap-dsgvo](https://beltoforion.de/de/openstreetmap-dsgvo)
+
 Pros:
 - Tiles are prerendered and served from a local folder in your own webspace
 - No connection to a third party tile server is necessary
