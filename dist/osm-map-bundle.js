@@ -1512,6 +1512,17 @@ class GpxOsmMapConfig {
 exports.GpxOsmMapConfig = GpxOsmMapConfig;
 class GpxOsmMap {
     markerStyleFunction(feature, resolution) {
+        const geometryType = feature.getGeometry().getType();
+        if (geometryType === 'LineString') {
+            const color = feature.get('color') || '#0000FF'; // Default blue color
+            const width = feature.get('width') || 3; // Default line width
+            return new style_1.Style({
+                stroke: new style_1.Stroke({
+                    color: color,
+                    width: width,
+                }),
+            });
+        }
         return new style_1.Style({
             image: new style_1.Circle({
                 fill: new style_1.Fill({ color: 'rgba(255,255,0,0.7)' }),

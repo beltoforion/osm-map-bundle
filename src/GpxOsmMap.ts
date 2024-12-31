@@ -60,6 +60,20 @@ export class GpxOsmMap {
   private rasterLayer: TileLayer<OSM> | undefined = undefined;
 
   private markerStyleFunction(feature : any, resolution : any) : Style {
+    const geometryType = feature.getGeometry().getType();
+    
+    if (geometryType === 'LineString') {
+      const color = feature.get('color') || '#0000FF'; // Default blue color
+      const width = feature.get('width') || 3;        // Default line width
+
+      return new Style({
+        stroke: new Stroke({
+          color: color,
+          width: width,
+        }),
+      });
+    }
+    
     return new Style({
       image: new CircleStyle({
         fill: new Fill({ color: 'rgba(255,255,0,0.7)' }),
