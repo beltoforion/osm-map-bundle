@@ -57,43 +57,50 @@ python tile_downloader.py \
 
 ```html
 <script>
-const config = new GpxOsmMap.GpxOsmMapConfig(
-    'map',                  // Map container ID
-    13.3604225,             // Longitude (center)
-    50.9951988,             // Latitude (center)
-    "./osm_tiles"           // Path to local tiles
-);
+const map = new GpxOsmMap.OsmMap('map');
+map.setView([50.963785, 13.343821], 10, 16, 15);
+map.addTileLayer('./osm_tiles/{z}/{x}/{y}.png');
 
-// Set zoom level configurations
-config.setZoom(14, 19, 14); // Min, max, and initial zoom levels
+// Add GPX layers
+map.addGpxLayer('rothschönberger-stolln.gpx', '#f00', 4);
+map.addGpxLayer('kurprinzkanal.gpx', '#55f', 2);
 
-// Optional: Add GPX layers for tracks
-config.setGpxLayers([
-  { url: 'grabentour.gpx', color: '#f00', width: 4 }
-]);
+var jsonStyles = {
+	'PointMarker': new GpxOsmMap.AnnotatedPointStyle('pointMarker', '#ff0')
+};
 
-// Optional: Add annotation points with names and coordinates
-config.setAnnotationLayer({
+var jsonData = {
 	"type": "FeatureCollection",
-	"features": [
-	{ 
-		"type": "Feature", 
-		"properties": { "name": "Wünschmannmühle" }, 
-		"geometry": { 
-			"type": "Point", 	
-			"coordinates": [13.370541, 50.985271] 
-		}
+	"crs": {
+		"type": "name",
+		"properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }
 	},
-	{ 
-		"type": "Feature", 
-		"properties": { "name": "4. Lichtloch" }, 
-		"geometry": { 
-			"type": "Point", 
-			"coordinates": [13.366876, 51.007467] 
+	"features": [
+		{
+			"type": "Feature",
+			"properties": { 
+				"name": "7. Lichtloch", 
+				"type": "PointMarker" 
+			},
+			"geometry": {
+				"type": "Point",
+				"coordinates": [13.343821, 50.963785]
+			}
+		},
+		{
+			"type": "Feature",
+			"properties": { 
+				"name": "8. Lichtloch", 
+				"type": "PointMarker" 
+			},
+			"geometry": {
+				"type": "Point",
+				"coordinates": [13.348811, 50.958655]
+			}
 		}
-	}]
-});
+    ]
+};
 
-const map = new GpxOsmMap.GpxOsmMap(config);
+map.addJsonLayer(jsonData, jsonStyles);
 </script>
 ```
