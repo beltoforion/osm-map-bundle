@@ -1,3 +1,2 @@
-import { OsmMap, GpxOsmMapConfig } from './GpxOsmMap'
-
-export { OsmMap, GpxOsmMapConfig };
+export { OsmMap } from './GpxOsmMap';
+export { FeatureStyleDictionary, LineStyle, AnnotatedPointStyle } from './FeatureStyles';
