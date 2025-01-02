@@ -12,19 +12,20 @@
 
 <script src="./osm-map-bundle.js"></script>
 <script>
-  const config = new GpxOsmMap.GpxOsmMapConfig(
-    'map',
-    13.3604225,
-    50.9951988,
-    "./osm_tiles"
-  );
-  config.setZoom(14, 19, 14);
-  config.setGpxLayers(    
-    [
-      { url: 'grabentour.gpx', color: '#f00', width: 4 },
-      { url: 'grabentour2.gpx', color: '#00f', width: 2 },
-    ]);
-  config.setAnnotationLayer({
+    const map = new GpxOsmMap.OsmMap('map');
+    map.setView([50.9951988, 13.3604225], 7, 19, 14);
+//    map.addTileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+    map.addTileLayer('./osm_tiles/{z}/{x}/{y}.png');    
+    map.addGpxLayer('grabentour.gpx', '#f00', 4);
+    map.addGpxLayer('grabentour2.gpx', '#00f', 2);
+
+    var jsonStyles = {
+      'Canal' : new GpxOsmMap.LineStyle('canal', '#0000FF', 3),
+      'Marker' : new GpxOsmMap.AnnotatedPointStyle('marker', '#0ff'),
+      'PointMarker' : new GpxOsmMap.AnnotatedPointStyle('pointMarker', '#ff0')
+    };
+    
+    var jsonData = {
       "type": "FeatureCollection",
       "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
                                         
@@ -33,8 +34,7 @@
           "type": "Feature", 
           "properties": { 
             "name": "Line String", 
-            "color": "#FF0000",  // Red color
-            "width": 3           // Line thickness
+            "type": "Canal",
           }, 
           "geometry": { 
             "type": "LineString", 
@@ -46,7 +46,10 @@
         },
         { 
           "type": "Feature", 
-          "properties": { "name": "Wünschmannmühle" }, 
+          "properties": { 
+            "name": "Wünschmannmühle",
+            "type": "Marker",
+           }, 
           "geometry": { 
             "type": "Point", 
             "coordinates": [  13.370541,  50.985271 ] 
@@ -54,7 +57,10 @@
         },
         { 
           "type": "Feature", 
-          "properties": { "name": "4. Lichtloch" }, 
+          "properties": { 
+            "name": "4. Lichtloch",
+            "type": "PointMarker",
+           }, 
           "geometry": { 
             "type": "Point", 
             "coordinates": [  13.366876,  51.007467 ] 
@@ -62,7 +68,10 @@
         },
         { 
           "type": "Feature", 
-          "properties": { "name": "5. Lichtloch" }, 
+          "properties": { 
+            "name": "5. Lichtloch",
+            "type": "Marker"
+          }, 
           "geometry": { 
             "type": "Point", 
             "coordinates": [  13.358399,  50.993126 ] 
@@ -70,7 +79,10 @@
         },
         { 
           "type": "Feature", 
-          "properties": { "name": "Kroatenstein" }, 
+          "properties": { 
+            "name": "Kroatenstein",
+            "type": "Marker"
+          }, 
           "geometry": { 
             "type": "Point", 
             "coordinates": [    13.358710,    50.996887 ] 
@@ -78,7 +90,10 @@
         },
         { 
           "type": "Feature", 
-          "properties": { "name": "Tausendtalersprung" }, 
+          "properties": { 
+            "name": "Tausendtalersprung",
+            "type": "Marker"
+          }, 
           "geometry": { 
             "type": "Point", 
             "coordinates": [   13.358548,     50.996336 ] 
@@ -86,7 +101,10 @@
         },
         { 
           "type": "Feature", 
-          "properties": { "name": "Porzellanfelsenrösche" }, 
+          "properties": { 
+            "name": "Porzellanfelsenrösche",
+            "type": "Marker"
+          }, 
           "geometry": { 
             "type": "Point", 
             "coordinates": [     13.362385,        50.992018 ] 
@@ -94,16 +112,18 @@
         },
         { 
           "type": "Feature", 
-          "properties": { "name": "Beiers Ruhe" }, 
+          "properties": { 
+            "name": "Beiers Ruhe",
+            "type": "Marker"
+          }, 
           "geometry": { 
             "type": "Point", 
             "coordinates": [ 13.3601700, 50.9949180 ] 
           }
         },
       ]
-    });
-
-  const map = new GpxOsmMap.GpxOsmMap(config);
+    };
+    map.addJsonLayer(jsonData, jsonStyles);
 </script>
 
 </body>
