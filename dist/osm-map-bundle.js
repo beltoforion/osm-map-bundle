@@ -1474,7 +1474,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.GpxOsmMap = exports.GpxOsmMapConfig = void 0;
+exports.OsmMap = exports.GpxOsmMapConfig = void 0;
 const layer_1 = __webpack_require__(/*! ol/layer */ "./node_modules/ol/layer.js");
 const control_1 = __webpack_require__(/*! ol/control */ "./node_modules/ol/control.js");
 const proj_1 = __webpack_require__(/*! ol/proj */ "./node_modules/ol/proj.js");
@@ -1482,7 +1482,6 @@ const style_1 = __webpack_require__(/*! ol/style */ "./node_modules/ol/style.js"
 const GeoJSON_1 = __importDefault(__webpack_require__(/*! ol/format/GeoJSON */ "./node_modules/ol/format/GeoJSON.js"));
 const GPX_1 = __importDefault(__webpack_require__(/*! ol/format/GPX */ "./node_modules/ol/format/GPX.js"));
 const Map_1 = __importDefault(__webpack_require__(/*! ol/Map */ "./node_modules/ol/Map.js"));
-const OSM_1 = __importDefault(__webpack_require__(/*! ol/source/OSM */ "./node_modules/ol/source/OSM.js"));
 const Vector_1 = __importDefault(__webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js"));
 const View_1 = __importDefault(__webpack_require__(/*! ol/View */ "./node_modules/ol/View.js"));
 const XYZ_1 = __importDefault(__webpack_require__(/*! ol/source/XYZ */ "./node_modules/ol/source/XYZ.js"));
@@ -1510,7 +1509,7 @@ class GpxOsmMapConfig {
     }
 }
 exports.GpxOsmMapConfig = GpxOsmMapConfig;
-class GpxOsmMap {
+class OsmMap {
     markerStyleFunction(feature, resolution) {
         const geometryType = feature.getGeometry().getType();
         if (geometryType === 'LineString') {
@@ -1539,77 +1538,79 @@ class GpxOsmMap {
             })
         });
     }
-    constructor(config) {
-        this.map = undefined;
-        this.gpxLayers = [];
-        this.annotationLayer = undefined;
-        this.rasterLayer = undefined;
-        (0, proj_1.useGeographic)();
-        const divMap = document.getElementById(config.id);
-        if (!divMap) {
-            throw new Error('The HTML document does not contain a div element named "' + config.id + '"');
+    setView(coord, zoom_min, zoom_max, zoom_initial) {
+        if (!this.map) {
+            throw new Error('The map object is not initialized');
         }
         const view = new View_1.default({
-            center: [config.lon, config.lat],
-            zoom: config.initialZoom,
-            minZoom: config.minZoom,
-            maxZoom: config.maxZoom,
+            center: [coord[1], coord[0]],
+            zoom: zoom_initial,
+            minZoom: zoom_min,
+            maxZoom: zoom_max,
         });
-        // If a local tile folder is specified, use it. Otherwise, use OSM tiles
-        var source_xyz = (config.local_tile_folder !== "")
-            ? new XYZ_1.default({
-                url: `./${config.local_tile_folder}/{z}/{x}/{y}.png`,
+        this.map.setView(view);
+        return this;
+    }
+    addGpxLayer(url, color, width) {
+        if (!this.map) {
+            throw new Error('The map object is not initialized');
+        }
+        var gpxLayer = new layer_1.Vector({
+            visible: true,
+            source: new Vector_1.default({
+                url: url,
+                format: new GPX_1.default(),
+            }),
+            style: new style_1.Style({
+                stroke: new style_1.Stroke({
+                    color: color || '#f00',
+                    width: width || 4, // Default width of 4
+                }),
+            }),
+        });
+        this.map.addLayer(gpxLayer);
+        return this;
+    }
+    addTileLayer(url) {
+        if (!this.map) {
+            throw new Error('The map object is not initialized');
+        }
+        var tileLayer = new layer_1.Tile({
+            source: new XYZ_1.default({
+                url: url,
                 tileSize: 256
             })
-            : new OSM_1.default();
-        this.rasterLayer = new layer_1.Tile({ source: source_xyz });
-        // Process multiple GPX layers
-        if (config.gpxLayers != null) {
-            config.gpxLayers.forEach((gpxConfig) => {
-                const gpxLayer = new layer_1.Vector({
-                    visible: true,
-                    source: new Vector_1.default({
-                        url: gpxConfig.url,
-                        format: new GPX_1.default(),
-                    }),
-                    style: new style_1.Style({
-                        stroke: new style_1.Stroke({
-                            color: gpxConfig.color || '#f00',
-                            width: gpxConfig.width || 4, // Default width of 4
-                        }),
-                    }),
-                });
-                // Fit the map view to the extent of the first GPX layer
-                if (this.gpxLayers.length === 0) {
-                    gpxLayer.once('postrender', () => {
-                        var _a, _b;
-                        const extent = (_b = (_a = gpxLayer.getSource()) === null || _a === void 0 ? void 0 : _a.getExtent()) !== null && _b !== void 0 ? _b : [0, 0, 0, 0];
-                        view.fit(extent, { padding: [60, 60, 60, 60] });
-                    });
-                }
-                this.gpxLayers.push(gpxLayer);
-            });
-        }
-        // Initialize the map
-        this.map = new Map_1.default({
-            layers: [this.rasterLayer, ...this.gpxLayers],
-            target: divMap.id,
-            view: view,
-            controls: (0, control_1.defaults)().extend([new ZoomSlider_1.default()]),
         });
-        if (config.annotation_geojson != null) {
-            this.annotationLayer = new layer_1.Vector({
-                visible: true,
-                source: new Vector_1.default({
-                    features: new GeoJSON_1.default().readFeatures(config.annotation_geojson),
-                }),
-                style: this.markerStyleFunction
-            });
-            this.map.addLayer(this.annotationLayer);
+        this.map.addLayer(tileLayer);
+        return this;
+    }
+    addJsonLayer(json, markerStyleFunction) {
+        if (!this.map) {
+            throw new Error('The map object is not initialized');
         }
+        var jsonLayer = new layer_1.Vector({
+            source: new Vector_1.default({
+                features: new GeoJSON_1.default().readFeatures(json),
+            }),
+            style: this.markerStyleFunction
+        });
+        this.map.addLayer(jsonLayer);
+        return this;
+    }
+    constructor(id) {
+        this.map = undefined;
+        (0, proj_1.useGeographic)();
+        const divMap = document.getElementById(id);
+        if (!divMap) {
+            throw new Error('The HTML document does not contain a div element named "' + id + '"');
+        }
+        this.map = new Map_1.default({
+            target: id,
+            controls: (0, control_1.defaults)({ attribution: true }).extend([new ZoomSlider_1.default()]),
+        });
     }
 }
-exports.GpxOsmMap = GpxOsmMap;
+exports.OsmMap = OsmMap;
 
 
 /***/ }),
@@ -62912,116 +62913,6 @@ function defaultImageLoadFunction(image, src) {
 
 /***/ }),
 
-/***/ "./node_modules/ol/source/OSM.js":
-/*!***************************************!*\
-  !*** ./node_modules/ol/source/OSM.js ***!
-  \***************************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   ATTRIBUTION: () => (/* binding */ ATTRIBUTION),
-/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
-/* harmony export */ });
-/* harmony import */ var _XYZ_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./XYZ.js */ "./node_modules/ol/source/XYZ.js");
-/**
- * @module ol/source/OSM
- */
-
-
-
-/**
- * The attribution containing a link to the OpenStreetMap Copyright and License
- * page.
- * @const
- * @type {string}
- * @api
- */
-const ATTRIBUTION =
-  '&#169; ' +
-  '<a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> ' +
-  'contributors.';
-
-/**
- * @typedef {Object} Options
- * @property {import("./Source.js").AttributionLike} [attributions] Attributions.
- * @property {number} [cacheSize] Initial tile cache size. Will auto-grow to hold at least the number of tiles in the viewport.
- * @property {null|string} [crossOrigin='anonymous'] The `crossOrigin` attribute for loaded images.  Note that
- * you must provide a `crossOrigin` value if you want to access pixel data with the Canvas renderer.
- * See https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image for more detail.
- * @property {boolean} [interpolate=true] Use interpolated values when resampling.  By default,
- * linear interpolation is used when resampling.  Set to false to use the nearest neighbor instead.
- * @property {number} [maxZoom=19] Max zoom.
- * @property {boolean} [opaque=true] Whether the layer is opaque.
- * @property {number} [reprojectionErrorThreshold=0.5] Maximum allowed reprojection error (in pixels).
- * Higher values can increase reprojection performance, but decrease precision.
- * @property {import("../Tile.js").LoadFunction} [tileLoadFunction] Optional function to load a tile given a URL. The default is
- * ```js
- * function(imageTile, src) {
- *   imageTile.getImage().src = src;
- * };
- * ```
- * @property {number} [transition=250] Duration of the opacity transition for rendering.
- * To disable the opacity transition, pass `transition: 0`.
- * @property {string} [url='https://tile.openstreetmap.org/{z}/{x}/{y}.png'] URL template.
- * Must include `{x}`, `{y}` or `{-y}`, and `{z}` placeholders.
- * @property {boolean} [wrapX=true] Whether to wrap the world horizontally.
- * @property {number|import("../array.js").NearestDirectionFunction} [zDirection=0]
- * Choose whether to use tiles with a higher or lower zoom level when between integer
- * zoom levels. See {@link module:ol/tilegrid/TileGrid~TileGrid#getZForResolution}.
- */
-
-/**
- * @classdesc
- * Layer source for the OpenStreetMap tile server.
- * @api
- */
-class OSM extends _XYZ_js__WEBPACK_IMPORTED_MODULE_0__["default"] {
-  /**
-   * @param {Options} [options] Open Street Map options.
-   */
-  constructor(options) {
-    options = options || {};
-
-    let attributions;
-    if (options.attributions !== undefined) {
-      attributions = options.attributions;
-    } else {
-      attributions = [ATTRIBUTION];
-    }
-
-    const crossOrigin =
-      options.crossOrigin !== undefined ? options.crossOrigin : 'anonymous';
-
-    const url =
-      options.url !== undefined
-        ? options.url
-        : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-
-    super({
-      attributions: attributions,
-      attributionsCollapsible: false,
-      cacheSize: options.cacheSize,
-      crossOrigin: crossOrigin,
-      interpolate: options.interpolate,
-      maxZoom: options.maxZoom !== undefined ? options.maxZoom : 19,
-      opaque: options.opaque !== undefined ? options.opaque : true,
-      reprojectionErrorThreshold: options.reprojectionErrorThreshold,
-      tileLoadFunction: options.tileLoadFunction,
-      transition: options.transition,
-      url: url,
-      wrapX: options.wrapX,
-      zDirection: options.zDirection,
-    });
-  }
-}
-
-/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (OSM);
-
-
-/***/ }),
-
 /***/ "./node_modules/ol/source/Raster.js":
 /*!******************************************!*\
   !*** ./node_modules/ol/source/Raster.js ***!
@@ -80539,15 +80430,10 @@ var exports = __webpack_exports__;
   \**********************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createGpxMap = exports.GpxOsmMapConfig = exports.GpxOsmMap = void 0;
+exports.GpxOsmMapConfig = exports.OsmMap = void 0;
 const GpxOsmMap_1 = __webpack_require__(/*! ./GpxOsmMap */ "./src/GpxOsmMap.ts");
-Object.defineProperty(exports, "GpxOsmMap", ({ enumerable: true, get: function () { return GpxOsmMap_1.GpxOsmMap; } }));
+Object.defineProperty(exports, "OsmMap", ({ enumerable: true, get: function () { return GpxOsmMap_1.OsmMap; } }));
 Object.defineProperty(exports, "GpxOsmMapConfig", ({ enumerable: true, get: function () { return GpxOsmMap_1.GpxOsmMapConfig; } }));
-function createGpxMap(config) {
-    var map = new GpxOsmMap_1.GpxOsmMap(config);
-    return map;
-}
-exports.createGpxMap = createGpxMap;
 
 })();
 

@@ -1,5 +1,5 @@
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
-import { defaults as defaultControls } from 'ol/control';
+import { Attribution, defaults as defaultControls } from 'ol/control';
 import { useGeographic } from 'ol/proj';
 import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style';
 import { Extent } from 'ol/extent';
@@ -53,11 +53,8 @@ export class GpxOsmMapConfig {
   }
 }
 
-export class GpxOsmMap {
+export class OsmMap {
   private map: Map | undefined = undefined;
-  private gpxLayers: VectorLayer<VectorSource>[] = [];
-  private annotationLayer : VectorLayer<VectorSource> | undefined = undefined;
-  private rasterLayer: TileLayer<OSM> | undefined = undefined;
 
   private markerStyleFunction(feature : any, resolution : any) : Style {
     const geometryType = feature.getGeometry().getType();
@@ -91,80 +88,92 @@ export class GpxOsmMap {
     })
   }
 
-  public constructor(config: GpxOsmMapConfig) {
-    useGeographic();
-
-    const divMap = document.getElementById(config.id) as HTMLDivElement;
-    if (!divMap) {
-      throw new Error('The HTML document does not contain a div element named "' + config.id + '"');
+  public setView(coord : [number, number], zoom_min: number, zoom_max : number, zoom_initial : number) : OsmMap {
+    if (!this.map) {
+      throw new Error('The map object is not initialized');
     }
 
     const view : View = new View({
-      center: [config.lon, config.lat],
-      zoom: config.initialZoom,
-      minZoom: config.minZoom,
-      maxZoom: config.maxZoom,
+      center: [coord[1], coord[0]],
+      zoom: zoom_initial,
+      minZoom: zoom_min,
+      maxZoom: zoom_max,
     });
 
-    // If a local tile folder is specified, use it. Otherwise, use OSM tiles
-    var source_xyz : XYZ = (config.local_tile_folder !== "") 
-      ? new XYZ({
-        url: `./${config.local_tile_folder}/{z}/{x}/{y}.png`, 
-        tileSize: 256
-      })
-      : new OSM();
+    this.map.setView(view);
 
-    this.rasterLayer = new TileLayer({ source: source_xyz });
+    return this;
+  }
 
-    // Process multiple GPX layers
-    if (config.gpxLayers != null)
-    {
-      config.gpxLayers.forEach((gpxConfig) => {
-        const gpxLayer = new VectorLayer({
-          visible: true,
-          source: new VectorSource({
-            url: gpxConfig.url,
-            format: new GPX(),
-          }),
-          style: new Style({
-            stroke: new Stroke({
-              color: gpxConfig.color || '#f00', // Default to red if no color specified
-              width: gpxConfig.width || 4, // Default width of 4
-            }),
-          }),
-        });
-
-        // Fit the map view to the extent of the first GPX layer
-        if (this.gpxLayers.length === 0) {
-          gpxLayer.once('postrender', () => {
-            const extent: Extent = gpxLayer.getSource()?.getExtent() ?? [0, 0, 0, 0];
-            view.fit(extent, { padding: [60, 60, 60, 60] });
-          });
-        }
-
-        this.gpxLayers.push(gpxLayer);
-      });
+  public addGpxLayer(url:string, color : string, width : number) : OsmMap {
+    if (!this.map) {
+      throw new Error('The map object is not initialized');
     }
 
-
-    // Initialize the map
-    this.map = new Map({
-      layers: [this.rasterLayer, ...this.gpxLayers],
-      target: divMap.id,
-      view: view,
-      controls: defaultControls().extend([new ZoomSlider()]),
-    });
-
-    if (config.annotation_geojson != null) {
-      this.annotationLayer = new VectorLayer({
+    var gpxLayer = new VectorLayer({
         visible: true,
         source: new VectorSource({
-          features: new GeoJSON().readFeatures(config.annotation_geojson),
+          url: url,
+          format: new GPX(),
         }),
-        style: this.markerStyleFunction 
-      });
+        style: new Style({
+          stroke: new Stroke({
+            color: color || '#f00', // Default to red if no color specified
+            width: width || 4, // Default width of 4
+          }),
+        }),
+    });
 
-      this.map.addLayer( this.annotationLayer)
+    this.map.addLayer(gpxLayer);
+
+    return this;
+  }
+
+  public addTileLayer(url:string) : OsmMap {
+    if (!this.map) {
+      throw new Error('The map object is not initialized');
     }
+
+    var tileLayer = new TileLayer({
+      source: new XYZ({
+        url: url,
+        tileSize: 256
+      })
+    });
+
+    this.map.addLayer(tileLayer);
+
+    return this;
+  }
+
+  public addJsonLayer(json:any, markerStyleFunction:any) : OsmMap {
+    if (!this.map) {
+      throw new Error('The map object is not initialized');
+    }
+
+    var jsonLayer = new VectorLayer({
+      source: new VectorSource({
+        features: new GeoJSON().readFeatures(json),
+      }),
+      style: this.markerStyleFunction
+    });
+
+    this.map.addLayer(jsonLayer);
+
+    return this
+  }
+
+  public constructor(id: string) {
+    useGeographic();
+
+    const divMap = document.getElementById(id) as HTMLDivElement;
+    if (!divMap) {
+      throw new Error('The HTML document does not contain a div element named "' + id + '"');
+    }
+
+    this.map = new Map({   
+      target: id,
+      controls: defaultControls({attribution : true}).extend([new ZoomSlider()]),
+    });
   }
 }
