@@ -3,7 +3,8 @@ import os
 import math
 import argparse
 import requests
-
+from PIL import Image
+import io
 
 def deg2tile(lat, lon, zoom):
     """Convert latitude and longitude to tile numbers."""
@@ -18,15 +19,18 @@ def download_tile(x, y, z, output_dir, url_template):
     """Download a single tile with retry logic."""
 
     url = url_template.format(z=z, x=x, y=y)
-    output_path = os.path.join(output_dir, str(z), str(x), f"{y}.png")
+    output_path = os.path.join(output_dir, str(z), str(x), f"{y}.webp")
     
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     print(f"Downloading tile: Zoom={z}, X={x}, Y={y}, URL={url} ...", end=" ")
     response = requests.get(url, stream=True)
     if response.status_code == 200:
-        with open(output_path, "wb") as f:
-            f.write(response.content)
+#        with open(output_path, "wb") as f:
+#            f.write(response.content)
+        image = Image.open(io.BytesIO(response.content))
+        webp_output_path = output_path.replace('.png', '.webp')
+        image.save(webp_output_path, 'WEBP')
         print(f"done")
     else:
         raise Exception(f"Failed to download: {url} with status code {response.status_code}")
