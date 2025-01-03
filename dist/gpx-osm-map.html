@@ -22,7 +22,8 @@
     var jsonStyles = {
       'Canal' : new OsmMap.LineStyle('#0000FF', 3),
       'Marker' : new OsmMap.AnnotatedPointStyle('#fff','#000', 8, 1),
-      'PointMarker' : new OsmMap.AnnotatedPointStyle('#ff0', '#000', 20, 1)
+      'PointMarker' : new OsmMap.AnnotatedPointStyle('#ff0', '#000', 20, 1),
+      'Mine' : new OsmMap.IconStyle('./assets/pin_grube.png', [0.5, 1], '#000', '#fff', 1, 0.2),
     };
     
     var jsonData = {
@@ -59,7 +60,7 @@
           "type": "Feature", 
           "properties": { 
             "name": "4. Lichtloch",
-            "type": "PointMarker",
+            "type": "Mine",
            }, 
           "geometry": { 
             "type": "Point", 
@@ -70,7 +71,7 @@
           "type": "Feature", 
           "properties": { 
             "name": "5. Lichtloch",
-            "type": "Marker"
+            "type": "Mine"
           }, 
           "geometry": { 
             "type": "Point", 

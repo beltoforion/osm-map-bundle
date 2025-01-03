@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: './src/index.ts', // Entry file
@@ -22,4 +23,11 @@ module.exports = {
     globalObject: 'this', // Ensure compatibility
   },
   devtool: 'source-map', // Source maps for debugging
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: path.resolve(__dirname, 'assets'), to: 'assets' }
+      ]
+    })
+  ]
 };

@@ -1,10 +1,51 @@
-import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style';
+import { Circle as CircleStyle, Fill, Stroke, Style, Text, Icon } from 'ol/style';
 
 export interface FeatureStyle {
     getStyle(): Style;
 }
 
 export type FeatureStyleDictionary = { [key: string]: FeatureStyle };
+
+
+export class IconStyle implements FeatureStyle {
+    private iconPath : string;
+    private anchor : [number, number];
+    private foreground: string;
+    private background: string;
+    private strokeWidth: number = 1;
+    private iconScale : number;
+
+    constructor(image : string, anchor : [number, number] = [0.5, 1], foreground: string = '#000', background: string = '#fff', strokeWidth: number = 1, iconScale : number = 0.2) {
+        this.iconPath = image;
+        this.anchor = anchor;
+        this.foreground = foreground;
+        this.background = background;
+        this.strokeWidth = strokeWidth;
+        this.iconScale = iconScale;
+    }
+
+    public getStyle() : Style {
+        const iconStyle = new Style({
+            image: new Icon({
+              anchor: this.anchor,
+              anchorXUnits: 'fraction',
+              anchorYUnits: 'fraction',
+              src: this.iconPath,
+              scale: this.iconScale
+            }),
+            text: new Text({
+                text: '',
+                scale: 1.3,
+                offsetX: 0,
+                offsetY: 20,
+                fill: new Fill({ color: this.background }),
+                stroke: new Stroke({ color: this.foreground, width: this.strokeWidth })
+            })
+          });
+
+          return iconStyle;
+    }
+}
 
 export class LineStyle implements FeatureStyle {
     private color: string;

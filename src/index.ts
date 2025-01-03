@@ -1,2 +1,2 @@
 export { OsmMap } from './OsmMap';
-export { FeatureStyleDictionary, LineStyle, AnnotatedPointStyle } from './FeatureStyles';
+export { FeatureStyleDictionary, LineStyle, IconStyle, AnnotatedPointStyle } from './FeatureStyles';
