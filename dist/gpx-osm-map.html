@@ -12,7 +12,7 @@
 
 <script src="./osm-map-bundle.js"></script>
 <script>
-    const map = new GpxOsmMap.OsmMap('map');
+    const map = new OsmMap.OsmMap('map');
     map.setView([50.9951988, 13.3604225], 7, 19, 14);
 //    map.addTileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
     map.addTileLayer('./osm_tiles/{z}/{x}/{y}.webp');    
@@ -20,9 +20,9 @@
     map.addGpxLayer('grabentour2.gpx', '#00f', 2);
 
     var jsonStyles = {
-      'Canal' : new GpxOsmMap.LineStyle('#0000FF', 3),
-      'Marker' : new GpxOsmMap.AnnotatedPointStyle('#0ff','#000', 8, 1),
-      'PointMarker' : new GpxOsmMap.AnnotatedPointStyle('#ff0', '#000', 20, 1)
+      'Canal' : new OsmMap.LineStyle('#0000FF', 3),
+      'Marker' : new OsmMap.AnnotatedPointStyle('#fff','#000', 8, 1),
+      'PointMarker' : new OsmMap.AnnotatedPointStyle('#ff0', '#000', 20, 1)
     };
     
     var jsonData = {

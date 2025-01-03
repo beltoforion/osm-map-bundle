@@ -17,7 +17,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'), // Output directory
     filename: 'osm-map-bundle.js', // Output file
-    library: 'GpxOsmMap', // Global variable
+    library: 'OsmMap', // Global variable
     libraryTarget: 'umd', // Universal Module Definition
     globalObject: 'this', // Ensure compatibility
   },
