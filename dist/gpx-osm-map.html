@@ -20,9 +20,9 @@
     map.addGpxLayer('grabentour2.gpx', '#00f', 2);
 
     var jsonStyles = {
-      'Canal' : new GpxOsmMap.LineStyle('canal', '#0000FF', 3),
-      'Marker' : new GpxOsmMap.AnnotatedPointStyle('marker', '#0ff'),
-      'PointMarker' : new GpxOsmMap.AnnotatedPointStyle('pointMarker', '#ff0')
+      'Canal' : new GpxOsmMap.LineStyle('#0000FF', 3),
+      'Marker' : new GpxOsmMap.AnnotatedPointStyle('#0ff','#000', 8, 1),
+      'PointMarker' : new GpxOsmMap.AnnotatedPointStyle('#ff0', '#000', 20, 1)
     };
     
     var jsonData = {
