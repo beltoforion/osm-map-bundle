@@ -8,3 +8,4 @@ src/*.js
 package-lock.json
 dist/osm_tiles/*
 *.txt
+*.zip

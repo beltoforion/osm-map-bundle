@@ -1,5 +1,5 @@
 import { Tile as TileLayer, Vector as VectorLayer } from 'ol/layer';
-import { Attribution, defaults as defaultControls } from 'ol/control';
+import { Attribution, FullScreen, defaults as defaultControls } from 'ol/control';
 import { useGeographic } from 'ol/proj';
 import { Stroke, Style } from 'ol/style';
 import GeoJSON from 'ol/format/GeoJSON';
@@ -134,7 +134,7 @@ export class OsmMap {
 
     this.map = new Map({   
       target: id,
-      controls: defaultControls({attribution : true}).extend([new ZoomSlider()]),
+      controls: defaultControls({attribution : true}).extend([new ZoomSlider(), new FullScreen()]),
     });
   }
 }

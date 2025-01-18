@@ -54,7 +54,7 @@ def main(min_lat, max_lat, min_lon, max_lon, zoom_levels, output_dir, url_templa
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Download tiles from a OSM Tile server for a specified bounding box.")
-    parser.add_argument("--min-lat", type=float, default=50.8592, help="Minimum latitude.")
+    parser.add_argument("--min-lat", type=float, default=50.797, help="Minimum latitude.")
     parser.add_argument("--max-lat", type=float, default=51.0824, help="Maximum latitude.")
     parser.add_argument("--min-lon", type=float, default=13.2701, help="Minimum longitude.")
     parser.add_argument("--max-lon", type=float, default=13.4488, help="Maximum longitude.")
