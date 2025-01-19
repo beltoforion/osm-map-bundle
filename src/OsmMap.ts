@@ -136,5 +136,48 @@ export class OsmMap {
       target: id,
       controls: defaultControls({attribution : true}).extend([new ZoomSlider(), new FullScreen()]),
     });
+
+    // change mouse cursor when over marker
+    this.map.on('pointermove', (e) => {
+      if (this.map==undefined) {
+        return;
+      }
+
+      let cursorChanged = false;
+      
+      this.map.forEachFeatureAtPixel(e.pixel, (feature, layer) => {
+        if (this.map==undefined) {
+          return;
+        }
+  
+        const properties = feature.getProperties();
+        const url = properties.url;
+
+        if (url !== undefined) {
+          this.map.getTargetElement().style.cursor = 'pointer';
+          cursorChanged = true;
+        }        
+      });
+
+      if (!cursorChanged) {
+        this.map.getTargetElement().style.cursor = '';
+      }
+    });
+
+    this.map.on('click', (e) => {
+      if (this.map==undefined) {
+        return;
+      }
+
+      this.map.forEachFeatureAtPixel(e.pixel, (feature, layer) => {
+        const properties = feature.getProperties();
+        const url = properties.url;
+
+        if (url) {
+//          window.open(url, '_blank');
+          window.location.href = url;
+        }
+      });    
+    });
   }
 }
