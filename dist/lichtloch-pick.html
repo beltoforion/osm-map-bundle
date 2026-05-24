@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Klick-Karte - 1. Lichtloch (Damm &amp; Gebaeude markieren)</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; background: #f0f0f0; display: flex; flex-wrap: wrap; }
+    #left { padding: 10px; }
+    #right { padding: 10px; min-width: 300px; max-width: 380px; }
+    canvas { border: 1px solid #888; cursor: crosshair; background: #ccc; }
+    h2 { margin: 0 0 6px; font-size: 16px; }
+    .t { font-size: 13px; line-height: 1.5; }
+    button { font-size: 13px; margin: 2px 0; }
+    #list { font-family: monospace; font-size: 12px; white-space: pre-wrap;
+            background: #fff; border: 1px solid #ccc; padding: 6px; height: 230px;
+            overflow: auto; margin-top: 6px; }
+    #hover { font-family: monospace; font-size: 12px; color: #333; min-height: 18px; }
+    label { cursor: pointer; }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 3px; }
+  </style>
+</head>
+<body>
+  <div id="left">
+    <h2>1. Lichtloch &ndash; Punkte markieren</h2>
+    <div id="hover">&nbsp;</div>
+    <canvas id="c" width="700" height="700"></canvas>
+  </div>
+  <div id="right">
+    <div class="t">
+      <b>Glaetten-Bereich markieren:</b> Typ <b>Glaetten</b> waehlen, dann die
+      Eckpunkte (Umriss) des zu glaettenden Bereichs klicken &ndash; dort wo die
+      Kanten zu steil sind.<br>
+      Karte zeigt das <b>bearbeitete</b> Gelaende (Ausschnitt). Damm (rot) und
+      Gebaeude (gruen) als Bezug eingezeichnet.<br>
+      Dann unten <b>Kopieren</b> und mir den Text schicken.
+    </div>
+    <p class="t"><b>Beleuchtung</b> (gegen die Relief-Taeuschung &ndash; falls Daemme wie Graeben aussehen, umschalten):<br>
+      <label><input type="radio" name="light" value="se"> Licht von unten-rechts (SE)</label>
+      <label><input type="radio" name="light" value="nw" checked> Licht von oben-links (NW)</label><br>
+      <span style="color:#555">Tipp: Die Hoehe beim Drueberfahren ist die Wahrheit &ndash;
+      hoeher als drumherum = Damm, niedriger = Graben.</span>
+    </p>
+    <p class="t legend">
+      Typ:
+      <label><input type="radio" name="t" value="Glaetten" checked> <i style="background:#8e24aa"></i>Glaetten</label>
+      <label><input type="radio" name="t" value="Halde"> <i style="background:#f9a825"></i>Halde</label>
+      <label><input type="radio" name="t" value="Huegel"> <i style="background:#2e7d32"></i>Huegel</label>
+      <label><input type="radio" name="t" value="Notiz"> <i style="background:#1565c0"></i>Sonstiges</label>
+    </p>
+    <button id="undo">&larr; Letzten entfernen</button>
+    <button id="clear">Alle loeschen</button>
+    <button id="copy"><b>Liste kopieren</b></button>
+    <span id="copied" style="color:green;font-size:12px"></span>
+    <div id="list">(noch keine Punkte)</div>
+  </div>
+
+  <script>
+  const COLORS = { Glaetten:'#8e24aa', Halde:'#f9a825', Huegel:'#2e7d32', Damm:'#d32f2f', Notiz:'#1565c0' };
+  const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  let meta, G, size, elev, B, img = new Image(), pts = [];
+
+  // hineingezoomter Ausschnitt (Ost/Nord in m) auf Damm / Gebaeude / Halde
+  const VIEW = { o0: 440, o1: 620, n0: 400, n1: 580 };
+  const vW = () => VIEW.o1 - VIEW.o0, vH = () => VIEW.n1 - VIEW.n0;
+
+  function toPx(ost, nord) {
+    return [(ost - VIEW.o0) / vW() * cv.width, (VIEW.n1 - nord) / vH() * cv.height];
+  }
+  function sampleZ(col, row) {
+    const c = Math.max(0, Math.min(G-1, Math.round(col)));
+    const r = Math.max(0, Math.min(G-1, Math.round(row)));
+    return elev[r * G + c];
+  }
+  // Klick/Hover-Pixel -> Geo-Groessen (Ausschnitt-bezogen)
+  function info(px, py) {
+    const east = VIEW.o0 + px / cv.width * vW();
+    const north = VIEW.n1 - py / cv.height * vH();
+    const col = east / size * (G - 1), row = (1 - north / size) * (G - 1);
+    return { east, north, col: Math.round(col), row: Math.round(row), z: sampleZ(col, row), px, py };
+  }
+
+  function redraw() {
+    // nur den Ausschnitt des Schummerungsbildes zeichnen (Bild deckt 0..size ab)
+    const sx = VIEW.o0 / size * img.width, sw = vW() / size * img.width;
+    const sy = (1 - VIEW.n1 / size) * img.height, sh = vH() / size * img.height;
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+    // Mittelpunkt = 1. Lichtloch
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.font = '11px sans-serif';
+    const m = toPx(500, 500);
+    ctx.beginPath(); ctx.arc(m[0], m[1], 7, 0, 7); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.fillText('1. Lichtloch', m[0] + 9, m[1] + 4);
+    // Referenzen: Damm-Linie (rot) + Gebaeude-Grundrisse (gruen)
+    if (B) {
+      let a = toPx(516, 441), z = toPx(590, 451);
+      ctx.strokeStyle = '#d32f2f'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(z[0], z[1]); ctx.stroke();
+      ctx.fillStyle = '#d32f2f'; ctx.fillText('Damm', (a[0]+z[0])/2, (a[1]+z[1])/2 - 4);
+      ctx.strokeStyle = '#0a0'; ctx.lineWidth = 2; ctx.fillStyle = '#0a0';
+      B.buildings.forEach(b => {
+        const u = [b.ux, b.uy], v = [-b.uy, b.ux];
+        ctx.beginPath();
+        [[1,1],[1,-1],[-1,-1],[-1,1]].forEach(([sl, sw], i) => {
+          const o = b.ost + sl*b.L/2*u[0] + sw*b.W/2*v[0];
+          const n = b.nord + sl*b.L/2*u[1] + sw*b.W/2*v[1];
+          const p = toPx(o, n); i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]);
+        });
+        ctx.closePath(); ctx.stroke();
+        const c = toPx(b.ost, b.nord); ctx.fillText(b.name.split(/[ (]/)[0], c[0] - 12, c[1]);
+      });
+    }
+    // Punkte
+    pts.forEach((p, i) => {
+      ctx.fillStyle = COLORS[p.type]; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(p.px, p.py, 5, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#000'; ctx.fillText(i+1, p.px + 6, p.py - 6);
+    });
+    renderList();
+  }
+
+  function renderList() {
+    if (!pts.length) { document.getElementById('list').textContent = '(noch keine Punkte)'; return; }
+    document.getElementById('list').textContent = pts.map((p, i) =>
+      `#${i+1} ${p.type}: Ost=${p.east.toFixed(0)}m Nord=${p.north.toFixed(0)}m `
+      + `(c=${p.col} r=${p.row}) Hoehe=${p.z.toFixed(1)}m`).join('\n');
+  }
+
+  cv.addEventListener('mousemove', e => {
+    const b = cv.getBoundingClientRect();
+    const i = info((e.clientX-b.left) * cv.width/b.width, (e.clientY-b.top) * cv.height/b.height);
+    document.getElementById('hover').textContent =
+      `Ost=${i.east.toFixed(0)}m Nord=${i.north.toFixed(0)}m  Hoehe=${i.z.toFixed(1)}m`;
+  });
+  cv.addEventListener('click', e => {
+    const b = cv.getBoundingClientRect();
+    const i = info((e.clientX-b.left) * cv.width/b.width, (e.clientY-b.top) * cv.height/b.height);
+    i.type = document.querySelector('input[name=t]:checked').value;
+    pts.push(i); redraw();
+  });
+  document.getElementById('undo').onclick = () => { pts.pop(); redraw(); };
+  document.getElementById('clear').onclick = () => { pts = []; redraw(); };
+  document.getElementById('copy').onclick = () => {
+    const head = `1. Lichtloch, 1x1 km, Gitter ${G}, Mitte = Ost 500 / Nord 500.\n`;
+    navigator.clipboard.writeText(head + document.getElementById('list').textContent);
+    const c = document.getElementById('copied'); c.textContent = 'kopiert!'; setTimeout(()=>c.textContent='', 1500);
+  };
+
+  (async function() {
+    meta = await (await fetch('./lichtloch3d/meta.json')).json();
+    G = meta.grid; size = meta.sizeMeters;
+    elev = new Float32Array(await (await fetch('./lichtloch3d/dgm1_dam_graded.bin')).arrayBuffer());
+    try { B = await (await fetch('./lichtloch3d/buildings.json')).json(); } catch (e) {}
+    img.onload = redraw;
+    setLight();
+  })();
+
+  function setLight() {
+    const t = document.querySelector('input[name=light]:checked').value;
+    img.src = './lichtloch3d/dgm1g_hs_' + t + '.png';   // bearbeitetes Gelaende; loest redraw aus
+  }
+  document.querySelectorAll('input[name=light]').forEach(r => r.onchange = setLight);
+  </script>
+</body>
+</html>

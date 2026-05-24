@@ -1,4 +1,5 @@
 debug.log
+__pycache__/
 node_modules/*
 *.map
 dist/osm-gps-map.js
@@ -9,3 +10,13 @@ package-lock.json
 dist/osm_tiles/*
 *.txt
 *.zip
+
+# LiDAR-Workflow: heruntergeladene Daten und generierte Kacheln nicht versionieren
+dgm1_cache/
+tiles_cache/
+.lidar_work/
+dist/lidar_tiles/
+dist/dgm1_tiles/
+dist/dom1_tiles/
+dist/lichtloch3d/
+dist/blender/

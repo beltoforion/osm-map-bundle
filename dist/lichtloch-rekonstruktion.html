@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Rekonstruktion 1. Lichtloch - Damm + Gebaeude</title>
+  <style>
+    html,body{margin:0;height:100%;overflow:hidden;font-family:sans-serif;background:#0b1020}
+    #c{display:block;width:100%;height:100%}
+    #panel{position:absolute;bottom:8px;left:8px;background:rgba(255,255,255,.9);
+      padding:4px 16px 4px 6px;border-radius:4px;font-size:11px;line-height:1.3;max-width:230px;
+      transform:scale(0.5);transform-origin:bottom left}
+    #panel b{font-size:11px}
+    #panel label{white-space:nowrap}
+    #hidebtn{position:absolute;top:2px;right:3px;border:none;background:none;cursor:pointer;font-size:12px;color:#555;padding:0;line-height:1}
+    #showbtn{position:absolute;bottom:8px;left:8px;z-index:2;display:none;font-size:11px;
+      padding:3px 7px;border-radius:4px;border:1px solid #aaa;background:rgba(255,255,255,.88);cursor:pointer}
+    label{cursor:pointer}
+    #loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#cdd}
+  </style>
+</head>
+<body>
+  <button id="showbtn">&#9776;</button>
+  <div id="panel">
+    <button id="hidebtn" title="ausblenden">&times;</button>
+    <b>1. Lichtloch</b><br>
+    Topographie:
+    <label><input type="radio" name="topo" value="1853" checked> 1853</label>
+    <label><input type="radio" name="topo" value="heute"> heute</label><br>
+    Schacht:
+    <label><input type="checkbox" id="mk" checked> Wiki</label>
+    <label><input type="checkbox" id="mk2" checked> Alt.</label><br>
+    Bergschmiede<br>
+    Treibe-/Maschinenhaus + Kesselhaus<br>
+    Schornstein
+  </div>
+  <div id="loading">Lade &hellip;</div>
+  <canvas id="c"></canvas>
+
+  <script type="importmap">
+  {"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+   "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    const DATA='./lichtloch3d/';
+    const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0b1020);
+    const renderer=new THREE.WebGLRenderer({canvas:c,antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    const camera=new THREE.PerspectiveCamera(50,1,0.5,20000);
+    const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true;
+    scene.add(new THREE.AmbientLight(0xffffff,0.6));
+    const sun=new THREE.DirectionalLight(0xffffff,2.0); sun.position.set(-1,1.3,-0.6); scene.add(sun);
+    function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+    addEventListener('resize',resize);
+    const panel=document.getElementById('panel'), showbtn=document.getElementById('showbtn');
+    document.getElementById('hidebtn').onclick=()=>{panel.style.display='none';showbtn.style.display='block';};
+    showbtn.onclick=()=>{panel.style.display='block';showbtn.style.display='none';};
+
+    function gableRoof(L,W,h0,h1){
+      const x=L/2,z=W/2;
+      const v=new Float32Array([-x,h0,-z,-x,h0,z,-x,h1,0, x,h0,-z,x,h0,z,x,h1,0]);
+      const g=new THREE.BufferGeometry();
+      g.setAttribute('position',new THREE.BufferAttribute(v,3));
+      g.setIndex([0,1,2,3,5,4,0,2,5,0,5,3,1,4,5,1,5,2]); g.computeVertexNormals(); return g;
+    }
+    const LIFT=0.5;   // Gebaeude um 0,5 m angehoben (Schwelle)
+    function house(b){
+      const grp=new THREE.Group();
+      // Fundament: von 0,4 m unter Boden bis zur angehobenen Schwelle -> kein Schweben
+      const fb=0.4, fh=LIFT+fb;
+      const f=new THREE.Mesh(new THREE.BoxGeometry(b.L,fh,b.W),
+        new THREE.MeshStandardMaterial({color:0x877f74,roughness:1})); f.position.y=-fb+fh/2; grp.add(f);
+      const w=new THREE.Mesh(new THREE.BoxGeometry(b.L,b.wallH,b.W),
+        new THREE.MeshStandardMaterial({color:0xb6a890,roughness:1})); w.position.y=LIFT+b.wallH/2; grp.add(w);
+      grp.add(new THREE.Mesh(gableRoof(b.L,b.W,LIFT+b.wallH,LIFT+b.wallH+b.roofH),
+        new THREE.MeshStandardMaterial({color:0x7d6f62,roughness:1,side:THREE.DoubleSide})));
+      grp.position.set(b.cx,b.baseY,b.cz); grp.rotation.y=b.ry; return grp;
+    }
+
+    (async function(){
+      const meta=await (await fetch(DATA+'meta.json')).json();
+      const G=meta.grid,size=meta.sizeMeters;
+      const gmin=Math.min(meta.products.dgm1.min,meta.products.dom1.min);
+      const orig=new Float32Array(await (await fetch(DATA+'dgm1.bin')).arrayBuffer());            // heute: Rohgelaende
+      const dam =new Float32Array(await (await fetch(DATA+'dgm1_dam_graded.bin')).arrayBuffer()); // 1853: rekonstruiert
+      let activeTerr=dam; const markers=[];
+      const B=await (await fetch(DATA+'buildings.json')).json();
+
+      const geo=new THREE.PlaneGeometry(size,size,G-1,G-1);
+      const terrain=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x8d9b78,roughness:1}));
+      function setTerrain(arr){
+        const p=geo.attributes.position;
+        // PlaneGeometry liegt in XY; vor rotateX setzen wir z=Hoehe. Einmalig rotiert -> hier y anpassen.
+        for(let k=0;k<p.count;k++) p.setY(k, arr[k]-gmin);
+        p.needsUpdate=true; geo.computeVertexNormals();
+      }
+      // Plane einmal flach in XZ legen (y=hoehe)
+      geo.rotateX(-Math.PI/2);
+      setTerrain(dam); scene.add(terrain);
+
+      const built=new THREE.Group();
+      let cx=0,cz=0; B.buildings.forEach(b=>{built.add(house(b));cx+=b.cx;cz+=b.cz;}); cx/=B.buildings.length; cz/=B.buildings.length;
+      const ch=B.chimney;
+      const chim=new THREE.Mesh(
+        new THREE.CylinderGeometry(ch.sizeTop/Math.SQRT2, ch.size/Math.SQRT2, ch.height, 4),
+        new THREE.MeshStandardMaterial({color:0x9c4a38,roughness:1}));
+      chim.position.set(ch.x,ch.baseY+ch.height/2,ch.z); chim.rotation.y=ch.ry+Math.PI/4; built.add(chim);
+      scene.add(built);
+
+      // Topographie umschalten: 1853 = rekonstruiert (Damm+Gebaeude+Wasser),
+      // heute = Rohgelaende (ohne Gebaeude/Wasser)
+      function applyTopo(){
+        const is1853=document.querySelector('input[name=topo]:checked').value==='1853';
+        activeTerr=is1853?dam:orig;
+        setTerrain(activeTerr);
+        water.visible=is1853; built.visible=is1853;
+        markers.forEach(g=>{ g.position.y=elevAtWorld(g.userData.x, g.userData.z); });
+      }
+      document.querySelectorAll('input[name=topo]').forEach(r=>r.onchange=applyTopo);
+
+      // dezente, abschaltbare Schacht-Marker
+      function elevAtWorld(x,z){
+        const ost=x+size/2, nord=size/2-z;
+        let c=Math.round(ost/size*(G-1)), r=Math.round((1-nord/size)*(G-1));
+        c=Math.max(0,Math.min(G-1,c)); r=Math.max(0,Math.min(G-1,r));
+        return activeTerr[r*G+c]-gmin;
+      }
+      function makeMarker(x,z,color){
+        const g=new THREE.Group();
+        const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,12,10),
+          new THREE.MeshStandardMaterial({color})); pole.position.y=6;
+        const ball=new THREE.Mesh(new THREE.SphereGeometry(1.3,14,14),
+          new THREE.MeshStandardMaterial({color,emissive:0x222200})); ball.position.y=13;
+        g.add(pole); g.add(ball); g.position.set(x,elevAtWorld(x,z),z);
+        g.userData={x,z}; markers.push(g); scene.add(g); return g;
+      }
+      const mk =makeMarker(0,0,0xe6c84d);            // Schacht laut Wikipedia (= Mitte)
+      const mk2=makeMarker(-3.19,1.71,0x2ad0e0);     // alternative Schachtposition
+      document.getElementById('mk').onchange=e=>{mk.visible=e.target.checked;};
+      document.getElementById('mk2').onchange=e=>{mk2.visible=e.target.checked;};
+
+      // --- Teich-Wasserflaeche: Suedseite des Damms, Pegel 2,5 m unter Krone ---
+      const WLVL_ABS=249.55, Wy=WLVL_ABS-gmin;
+      const uu=[0.99106,0.13393];                       // Damm-Richtung #1->#2 (normiert)
+      const pond=new Uint8Array(G*G);
+      for(let k=0;k<G*G;k++){
+        const r=(k/G)|0, c=k%G;
+        const ost=c/(G-1)*size, nord=(1-r/(G-1))*size;
+        const signed=(ost-516)*uu[1]-(nord-441)*uu[0];  // >0 = Sued (Teichseite)
+        pond[k]=(signed>0 && dam[k]<WLVL_ABS)?1:0;
+      }
+      const wp=[], wi=[];
+      const XYZ=(r,c)=>[c/(G-1)*size-size/2, Wy, r/(G-1)*size-size/2];
+      for(let r=0;r<G-1;r++) for(let c=0;c<G-1;c++){
+        const k=r*G+c;
+        if(pond[k]&&pond[k+1]&&pond[k+G]&&pond[k+G+1]){
+          const b=wp.length/3;
+          wp.push(...XYZ(r,c),...XYZ(r,c+1),...XYZ(r+1,c),...XYZ(r+1,c+1));
+          wi.push(b,b+2,b+3, b,b+3,b+1);
+        }
+      }
+      const wgeo=new THREE.BufferGeometry();
+      wgeo.setAttribute('position',new THREE.Float32BufferAttribute(wp,3)); wgeo.setIndex(wi);
+      const water=new THREE.Mesh(wgeo, new THREE.MeshStandardMaterial({
+        color:0x2e6b8f, transparent:true, opacity:0.72, roughness:0.3,
+        side:THREE.DoubleSide, depthWrite:false}));
+      scene.add(water);
+
+      // Szene an den (ggf. vom Browser wiederhergestellten) Panel-Zustand angleichen
+      applyTopo();
+      mk.visible = document.getElementById('mk').checked;
+      mk2.visible = document.getElementById('mk2').checked;
+
+      resize();
+      // Blick aus Richtung der Bergschmiede (Geb. 1) auf Gebaeude 2 - wie das Foto
+      const g1=B.buildings[0];
+      const g2x=(B.buildings[1].cx+B.buildings[2].cx)/2, g2z=(B.buildings[1].cz+B.buildings[2].cz)/2;
+      controls.target.set(g2x, 8, g2z);
+      let dx=g1.cx-g2x, dz=g1.cz-g2z; const dl=Math.hypot(dx,dz)||1; dx/=dl; dz/=dl;
+      camera.position.set(g2x+dx*85, 55, g2z+dz*85);
+      document.getElementById('loading').remove();
+      (function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);})();
+    })();
+  </script>
+</body>
+</html>

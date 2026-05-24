@@ -84,19 +84,21 @@ export class OsmMap {
     return this;
   }
 
-  public addTileLayer(url:string) : OsmMap {
+  public addTileLayer(url:string, maxZoom? : number) : OsmMap {
     if (!this.map) {
       throw new Error('The map object is not initialized');
     }
 
-    var tileLayer = new TileLayer({
-      source: new XYZ({
-        url: url,
-        tileSize: 256
-      })
+    // maxZoom = hoechste Zoomstufe, fuer die Kacheln existieren. Ist die Ansicht
+    // weiter hineingezoomt, skaliert OpenLayers diese Kacheln hoch (Over-Zoom),
+    // statt nicht vorhandene Kacheln anzufordern (sonst leere Flaechen).
+    var source = new XYZ({
+      url: url,
+      tileSize: 256,
+      maxZoom: maxZoom,
     });
 
-    this.map.addLayer(tileLayer);
+    this.map.addLayer(new TileLayer({ source: source }));
 
     return this;
   }
