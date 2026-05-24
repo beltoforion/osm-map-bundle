@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" href="ol.css" />
+  <title>LiDAR-Test - DGM1 Schummerung Sachsen</title>
+  <style>
+    html, body { margin: 0; height: 100%; font-family: sans-serif; }
+    #map { height: 100%; width: 100%; background: #e8e8e8; }
+    #info {
+      position: absolute; top: 8px; left: 8px; z-index: 1;
+      background: rgba(255,255,255,0.85); padding: 6px 10px; border-radius: 4px;
+      font-size: 12px; line-height: 1.4; max-width: 320px;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <b>LiDAR-Test:</b> DGM1-Schummerung (Sachsen, GeoSN)<br>
+    Bereich um Freiberg. Tiles lokal aus <code>./lidar_tiles/</code>.<br>
+    Lizenz: dl-de/by-2-0, Geodaten Sachsen.
+  </div>
+  <div id="map"></div>
+
+  <script src="./osm-map-bundle.js"></script>
+  <script>
+    // Karte auf das Zentrum der heruntergeladenen DGM1-Kacheln zentrieren.
+    const map = new OsmMap.OsmMap('map');
+    // Ansicht erlaubt Zoom bis 19 (eine Stufe Over-Zoom ueber die native z18 hinaus).
+    map.setView([50.917972, 13.349724], 13, 19, 16);  // [lat, lon], zoom min/max/initial
+
+    // Lokale LiDAR-Schummerungs-Kacheln (erzeugt mit lidar_tiler.py).
+    // 2. Parameter = hoechste vorhandene Kachel-Zoomstufe (18). Darueber skaliert
+    // OpenLayers die Kacheln hoch (Over-Zoom), statt leere Flaechen zu zeigen.
+    map.addTileLayer('./lidar_tiles/{z}/{x}/{y}.webp', 18);
+  </script>
+</body>
+</html>

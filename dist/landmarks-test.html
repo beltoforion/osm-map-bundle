@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet" href="ol.css" />
+  <title>LiDAR Sehenswuerdigkeiten - DGM1 / DOM1</title>
+  <style>
+    html, body { margin: 0; height: 100%; font-family: sans-serif; }
+    #map { height: 100%; width: 100%; background: #e8e8e8; }
+    #panel {
+      position: absolute; top: 8px; left: 8px; z-index: 1;
+      background: rgba(255,255,255,0.9); padding: 8px 12px; border-radius: 4px;
+      font-size: 13px; line-height: 1.5; max-width: 320px;
+    }
+    #panel label { cursor: pointer; }
+    select { font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div id="panel">
+    <b>Bergbau-Sehenswuerdigkeiten</b> (Freiberger Revier)<br>
+    Ebene:
+    <label><input type="radio" name="layer" value="dgm1" checked> DGM1 (Gelaende)</label>
+    <label><input type="radio" name="layer" value="dom1"> DOM1 (Oberflaeche)</label><br>
+    Springe zu:
+    <select id="goto"></select><br>
+    <span style="font-size:11px;color:#555">Lizenz: dl-de/by-2-0, Geodaten Sachsen</span>
+  </div>
+  <div id="map"></div>
+
+  <script src="./osm-map-bundle.js"></script>
+  <script>
+    // Anflugpunkte (lat, lon) - gleiche Liste wie build_landmarks.py
+    const POIS = {
+      "Stollnmundloch Rothschoenberg": [51.067223, 13.399587],
+      "Lichtloch 1": [51.051132, 13.387667],
+      "Lichtloch 2": [51.036260, 13.380795],
+      "Lichtloch 3": [51.022147, 13.374192],
+      "Lichtloch 4": [51.007467, 13.366773],
+      "Lichtloch 5": [50.993352, 13.357787],
+      "Lichtloch 6": [50.978791, 13.351446],
+      "Lichtloch 7 (Halsbruecke)": [50.963779, 13.343770],
+      "Kahnhebehaus Halsbruecke": [50.961266, 13.338104],
+      "Kahnhebehaus Grossvoigtsberg": [50.983744, 13.302176],
+      "Grube Churprinz": [50.969699, 13.309791],
+      "Altvaeterbruecke": [50.958546, 13.331278],
+      "Alter Tiefer Fuerstenstolln": [50.940300, 13.371700],
+      "Alte Mordgrube": [50.869617, 13.335552],
+      "Grosshartmannsdorfer Teich": [50.808333, 13.339444],
+      "Hungerborn (Rotvorwerksteich)": [50.879216, 13.312816],
+      "Bartholomaeusschacht": [50.860000, 13.319450],
+      "Konstantinschacht": [50.873000, 13.340000],
+      "Freiberg": [50.917051, 13.342730],
+      "Brand-Erbisdorf": [50.869167, 13.321944],
+      "Thelersberger Stolln": [50.878336, 13.282028],
+      "Erzengler Teich": [50.852222, 13.339444],
+      "Weigmannsdorf-Muedisdorf": [50.839042, 13.381319],
+      "Rothenfurth": [50.966333, 13.314550],
+      "Grossschirma": [50.966389, 13.278056],
+      "Zechenteich (~ Lossnitz)": [50.934722, 13.330556],
+      "Siebenlehn": [51.031944, 13.308333],
+      "Reinsberg": [51.008333, 13.363889],
+      "Zollhausbruecke (~ Bobritzsch)": [51.007600, 13.352000],
+      "Langhennersdorf": [50.943232, 13.249103],
+      "Krummenhennersdorf": [50.979167, 13.362500],
+      "Steinbruch Oberschoena": [50.893300, 13.274200],
+      "Wegefahrt": [50.913000, 13.272000],
+      "Grosser Teich / Waldbad Freiberg": [50.909000, 13.353000],
+      "Mittelteich Freiberg": [50.911000, 13.349000],
+      "Naundorf (Bobritzsch)": [50.935000, 13.420556],
+      "Niederbobritzsch": [50.898611, 13.435000],
+      "Muldenhuetten": [50.903056, 13.384722],
+      "Weissenborn/Erzgeb.": [50.871111, 13.400833],
+    };
+
+    const map = new OsmMap.OsmMap('map');
+    map.setView(POIS["Lichtloch 5"], 13, 19, 16);  // Start mitten in der Stolln-Kette
+    map.addTileLayer('./dgm1_tiles/{z}/{x}/{y}.webp', 18);  // Ebene 0 = DGM1
+    map.addTileLayer('./dom1_tiles/{z}/{x}/{y}.webp', 18);  // Ebene 1 = DOM1 (oben)
+
+    // Zugriff auf die OL-Ebenen (zur Laufzeit), um zwischen DGM1/DOM1 umzuschalten.
+    const layers = map.map.getLayers().getArray();
+    const dgm1Layer = layers[layers.length - 2];
+    const dom1Layer = layers[layers.length - 1];
+    dom1Layer.setVisible(false);  // Start mit DGM1
+
+    document.querySelectorAll('input[name=layer]').forEach(r => {
+      r.onchange = () => {
+        const dom1 = document.querySelector('input[name=layer]:checked').value === 'dom1';
+        dom1Layer.setVisible(dom1);
+        dgm1Layer.setVisible(!dom1);
+      };
+    });
+
+    // Sprung-Auswahl befuellen
+    const sel = document.getElementById('goto');
+    Object.keys(POIS).forEach(name => {
+      const o = document.createElement('option');
+      o.value = name; o.textContent = name; sel.appendChild(o);
+    });
+    sel.value = "Lichtloch 5";
+    sel.onchange = () => {
+      const c = POIS[sel.value];                 // [lat, lon]
+      map.map.getView().animate({ center: [c[1], c[0]], zoom: 16, duration: 600 });
+    };
+  </script>
+</body>
+</html>
